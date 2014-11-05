@@ -136,6 +136,7 @@ class Image(object):
 
     name = _proxy('base', 'name')
     image_id = _proxy('base', 'image_id')
+    parent_id = _proxy('base', 'parent_id')
     name = _proxy('base', 'name')
     status = _proxy('base', 'status')
     created_at = _proxy('base', 'created_at')

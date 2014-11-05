@@ -274,7 +274,8 @@ class RequestDeserializer(wsgi.JSONRequestDeserializer):
     _base_properties = ['checksum', 'created_at', 'container_format',
                         'disk_format', 'id', 'min_disk', 'min_ram', 'name',
                         'size', 'virtual_size', 'status', 'tags',
-                        'updated_at', 'visibility', 'protected']
+                        'updated_at', 'visibility', 'protected',
+                        'parent_id']
     _path_depth_limits = {'locations': {'add': 2, 'remove': 2, 'replace': 1}}
 
     def __init__(self, schema=None):
@@ -568,7 +569,7 @@ class ResponseSerializer(wsgi.JSONResponseSerializer):
             attributes = ['name', 'disk_format', 'container_format',
                           'visibility', 'size', 'virtual_size', 'status',
                           'checksum', 'protected', 'min_ram', 'min_disk',
-                          'owner']
+                          'owner', 'parent_id']
             for key in attributes:
                 image_view[key] = getattr(image, key)
             image_view['id'] = image.image_id
@@ -643,6 +644,12 @@ def _get_base_properties():
         'id': {
             'type': 'string',
             'description': _('An identifier for the image'),
+            'pattern': ('^([0-9a-fA-F]){8}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}'
+                        '-([0-9a-fA-F]){4}-([0-9a-fA-F]){12}$'),
+        },
+        'parent_id': {
+            'type': 'string',
+            'description': _('An identifier for the parent image'),
             'pattern': ('^([0-9a-fA-F]){8}-([0-9a-fA-F]){4}-([0-9a-fA-F]){4}'
                         '-([0-9a-fA-F]){4}-([0-9a-fA-F]){12}$'),
         },

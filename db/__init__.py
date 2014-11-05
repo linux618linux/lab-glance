@@ -51,7 +51,7 @@ IMAGE_ATTRS = BASE_MODEL_ATTRS | set(['name', 'status', 'size', 'virtual_size',
                                       'disk_format', 'container_format',
                                       'min_disk', 'min_ram', 'is_public',
                                       'locations', 'checksum', 'owner',
-                                      'protected'])
+                                      'protected', 'parent_id'])
 
 
 class ImageRepo(object):
@@ -102,6 +102,7 @@ class ImageRepo(object):
             locations = ld
         return glance.domain.Image(
             image_id=db_image['id'],
+            parent_id=db_image['parent_id'],
             name=db_image['name'],
             status=db_image['status'],
             created_at=db_image['created_at'],
@@ -132,6 +133,7 @@ class ImageRepo(object):
             locations = ld
         return {
             'id': image.image_id,
+            'parent_id': image.parent_id,
             'name': image.name,
             'status': image.status,
             'created_at': image.created_at,

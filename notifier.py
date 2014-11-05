@@ -131,6 +131,7 @@ def format_image_notification(image):
     return {
         'id': image.image_id,
         'name': image.name,
+        'parent_id': image.parent_id,
         'status': image.status,
         'created_at': timeutils.isotime(image.created_at),
         'updated_at': timeutils.isotime(image.updated_at),

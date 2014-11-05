@@ -111,6 +111,7 @@ class Image(object):
         self.created_at = created_at
         self.updated_at = updated_at
         self.name = kwargs.pop('name', None)
+        self.parent_id = kwargs.pop('parent_id', None)
         self.visibility = kwargs.pop('visibility', 'private')
         self.min_disk = kwargs.pop('min_disk', 0)
         self.min_ram = kwargs.pop('min_ram', 0)

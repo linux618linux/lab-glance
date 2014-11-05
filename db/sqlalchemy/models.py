@@ -125,6 +125,7 @@ class Image(BASE, GlanceBase):
 
     id = Column(String(36), primary_key=True,
                 default=lambda: str(uuid.uuid4()))
+    parent_id = Column(String(36))
     name = Column(String(255))
     disk_format = Column(String(20))
     container_format = Column(String(20))

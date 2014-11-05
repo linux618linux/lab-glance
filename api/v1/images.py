@@ -284,6 +284,7 @@ class Controller(controller.BaseController):
             * container_format -- The "container" format of the image
             * checksum -- MD5 checksum of the image data
             * size -- Size of image data in bytes
+            * parent_id -- The parent_id of the backing file
 
         :param req: The WSGI/Webob Request object
         :retval The response body is a mapping of the following form::
@@ -327,6 +328,7 @@ class Controller(controller.BaseController):
                  'created_at': <TIMESTAMP>,
                  'updated_at': <TIMESTAMP>,
                  'deleted_at': <TIMESTAMP>|<NONE>,
+                 'parent_id': <PARENT_ID>
                  'properties': {'distro': 'Ubuntu 10.04 LTS', ...}}, ...
             ]}
         """
