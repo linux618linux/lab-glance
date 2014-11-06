@@ -16,6 +16,8 @@
 """
 /images endpoint for Glance v1 API
 """
+import os
+import hashlib
 
 import copy
 
@@ -59,6 +61,7 @@ CONF.import_opt('disk_formats', 'glance.common.config', group='image_format')
 CONF.import_opt('container_formats', 'glance.common.config',
                 group='image_format')
 CONF.import_opt('image_property_quota', 'glance.common.config')
+CONF.import_opt('ali_dfs_backend', 'glance.common.config')
 
 
 def validate_image_meta(req, values):
@@ -665,6 +668,28 @@ class Controller(controller.BaseController):
         # issue/12/fix-for-issue-6-broke-chunked-transfer
         req.is_body_readable = True
         location, location_metadata = self._upload(req, image_meta)
+        
+        # glance uses the glusterfs distributed filesystem to store the image files, and
+        # configure the glance_images_dir, nova_instances_dir to mount the same glusterfs volume,
+        # make a relative symbolic link for glance_image_id_file in CONF.filesystem_store_datadir
+        # as nova_base_id_file named hashlib.sha1(glance_image_id_file) in nova_base_dir
+        # to ignore nova's downloading for the image so as to accelerate booting the instance
+        if CONF.ali_dfs_backend == "glusterfs":
+            nova_base_dir = "/var/lib/nova/instances/_base/"
+            if not os.path.exists(nova_base_dir):
+                os.mkdir(nova_base_dir)
+                syscmd = "chmod 777 " +nova_base_dir
+                os.system(syscmd)
+            glance_image_path = "../" +image_id
+            nova_base_path = "./" +hashlib.sha1(image_id).hexdigest()
+            old_cwd = os.getcwd()
+            os.chdir(nova_base_dir)
+            if os.path.exists(glance_image_path):
+                os.symlink(glance_image_path, nova_base_path)
+                syscmd = "chmod 777 " +glance_image_path
+                os.system(syscmd)
+            os.chdir(old_cwd)
+        
         return self._activate(req,
                               image_id,
                               location,
@@ -1022,6 +1047,14 @@ class Controller(controller.BaseController):
                 registry.update_image_metadata(req.context, id,
                                                {'status': ori_status})
                 raise e
+            
+            # after deleting the glance_image_id_file in CONF.filesystem_store_datadir,
+            # delete its relative symbolic link file nova_base_id_file in nova_base_dir
+            # so as to complete the whole deleting process
+            nova_base_path = "/var/lib/nova/instances/_base/" +hashlib.sha1(id).hexdigest()
+            if os.path.islink(nova_base_path):
+                os.remove(nova_base_path)
+            
             registry.delete_image_metadata(req.context, id)
         except exception.NotFound as e:
             msg = _("Failed to find image to delete: %(e)s") % {'e': e}

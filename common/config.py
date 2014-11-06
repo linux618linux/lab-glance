@@ -120,12 +120,17 @@ common_opts = [
                help=_('Key used for encrypting sensitive metadata while '
                       'talking to the registry or database.')),
 ]
+ali_dfs_backend_opts = [
+    cfg.StrOpt('ali_dfs_backend', default='filesystem',
+               help=_('The backend distributed filesystem to store images and instances')),
+]
 
 CONF = cfg.CONF
 CONF.register_opts(paste_deploy_opts, group='paste_deploy')
 CONF.register_opts(image_format_opts, group='image_format')
 CONF.register_opts(task_opts, group='task')
 CONF.register_opts(common_opts)
+CONF.register_opts(ali_dfs_backend_opts)
 
 
 def parse_args(args=None, usage=None, default_config_files=None):
