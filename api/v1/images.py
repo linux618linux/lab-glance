@@ -17,6 +17,7 @@
 /images endpoint for Glance v1 API
 """
 import os
+import sys
 import hashlib
 
 import copy
@@ -663,6 +664,9 @@ class Controller(controller.BaseController):
         :retval Mapping of updated image data
         """
         image_id = image_meta['id']
+        base_id = hashlib.sha1(image_id).hexdigest()
+        parent_id = image_meta['parent_id']
+        
         # This is necessary because of a bug in Webob 1.0.2 - 1.0.7
         # See: https://bitbucket.org/ianb/webob/
         # issue/12/fix-for-issue-6-broke-chunked-transfer
@@ -675,20 +679,32 @@ class Controller(controller.BaseController):
         # as nova_base_id_file named hashlib.sha1(glance_image_id_file) in nova_base_dir
         # to ignore nova's downloading for the image so as to accelerate booting the instance
         if CONF.ali_dfs_backend == "glusterfs":
-            nova_base_dir = "/var/lib/nova/instances/_base/"
+            nova_instance_dir = "/var/lib/nova/instances/"
+            nova_base_dir = nova_instance_dir +"_base/"
             if not os.path.exists(nova_base_dir):
                 os.mkdir(nova_base_dir)
                 syscmd = "chmod 777 " +nova_base_dir
                 os.system(syscmd)
-            glance_image_path = "../" +image_id
-            nova_base_path = "./" +hashlib.sha1(image_id).hexdigest()
-            old_cwd = os.getcwd()
-            os.chdir(nova_base_dir)
+            glance_image_path = nova_instance_dir +image_id
+            nova_base_path = nova_base_dir +base_id
+            
             if os.path.exists(glance_image_path):
                 os.symlink(glance_image_path, nova_base_path)
                 syscmd = "chmod 777 " +glance_image_path
                 os.system(syscmd)
-            os.chdir(old_cwd)
+                
+                while parent_id is not None:
+                    parent_image_path = nova_instance_dir +parent_id
+                    syscmd = "qemu-img rebase -u -b " +parent_image_path +" " +glance_image_path
+                    os.system(syscmd)
+                    
+                    parent_base_path = nova_base_dir +hashlib.sha1(parent_id).hexdigest()
+                    if not os.path.exists(parent_base_path):
+                        os.symlink(parent_image_path, parent_base_path)
+                    
+                    parent_meta = self.meta(req, parent_id)
+                    parent_id = parent_meta.get("parent_id")
+                    glance_image_path = parent_image_path
         
         return self._activate(req,
                               image_id,
