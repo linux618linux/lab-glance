@@ -17,7 +17,6 @@
 /images endpoint for Glance v1 API
 """
 import os
-import sys
 import hashlib
 
 import copy
@@ -697,10 +696,6 @@ class Controller(controller.BaseController):
                     parent_image_path = nova_instance_dir +parent_id
                     syscmd = "qemu-img rebase -u -b " +parent_image_path +" " +glance_image_path
                     os.system(syscmd)
-                    
-                    parent_base_path = nova_base_dir +hashlib.sha1(parent_id).hexdigest()
-                    if not os.path.exists(parent_base_path):
-                        os.symlink(parent_image_path, parent_base_path)
                     
                     parent_meta = self.meta(req, parent_id)
                     parent_id = parent_meta.get("parent_id")
